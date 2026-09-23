@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"runtime"
 
 	"github.com/jgalea/ebay-cli/internal/ebay"
 )
@@ -51,14 +52,30 @@ Set up once:
 
   1. Create an eBay developer account and a Production keyset at
      https://developer.ebay.com/my/keys
-  2. Store the two values in the Keychain, entering each when prompted so the
+     The App ID is the client id and the Cert ID is the client secret.
+`)
+	if runtime.GOOS == "darwin" {
+		fmt.Print(`  2. Store the two values in the Keychain, entering each when prompted so the
      value never appears in shell history:
 
      security add-generic-password -a "$USER" -s claude-ebay-client-id -U -w
      security add-generic-password -a "$USER" -s claude-ebay-client-secret -U -w
 
-The App ID is the client id and the Cert ID is the client secret.
-EBAY_CLIENT_ID and EBAY_CLIENT_SECRET work too.
-
 `)
+	}
+	path, _ := ebay.CredentialsPath()
+	step, perms := "2. Save", ""
+	if runtime.GOOS == "darwin" {
+		step = "3. Or save"
+	}
+	if runtime.GOOS != "windows" {
+		perms = "\n     then chmod 600 it so only you can read it"
+	}
+	fmt.Printf(`  %s them in %s%s:
+
+     {"client_id": "...", "client_secret": "..."}
+
+EBAY_CLIENT_ID and EBAY_CLIENT_SECRET work too, and are read first.
+
+`, step, path, perms)
 }

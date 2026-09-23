@@ -17,18 +17,26 @@ Built on eBay's official Browse API, so there is no scraping and nothing to brea
 go install github.com/jgalea/ebay-cli/cmd/ebay@latest
 ```
 
+Works on macOS, Linux and Windows.
+
 ## Credentials
 
 You need a Production keyset from https://developer.ebay.com/my/keys. The App ID is the client id, the Cert ID is the client secret.
 
-Store both in the Keychain, entering each at the prompt so the value never lands in shell history:
+On macOS, store both in the Keychain, entering each at the prompt so the value never lands in shell history:
 
 ```
 security add-generic-password -a "$USER" -s claude-ebay-client-id -U -w
 security add-generic-password -a "$USER" -s claude-ebay-client-secret -U -w
 ```
 
-`EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET` are read first if set. Confirm it works with `ebay auth --check`.
+On Linux and Windows, which have no Keychain, save them in `credentials.json` in the config directory (`~/.config/ebay-cli/` on Linux, `%AppData%\ebay-cli\` on Windows). On Linux, `chmod 600` it. This file works on macOS too, in `~/Library/Application Support/ebay-cli/`.
+
+```json
+{"client_id": "...", "client_secret": "..."}
+```
+
+`EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET` are read first if set. `ebay auth` prints the exact path for your machine, and `ebay auth --check` confirms the credentials work.
 
 ## Search
 
@@ -75,7 +83,7 @@ The first `run` records everything already listed and reports nothing. Every run
 */30 * * * * /path/to/ebay watch run
 ```
 
-Watches live in `~/Library/Application Support/ebay-cli/watches.json` on macOS.
+Watches live in `watches.json` in the same config directory as the credentials: `~/Library/Application Support/ebay-cli/` on macOS, `~/.config/ebay-cli/` on Linux, `%AppData%\ebay-cli\` on Windows. On Windows, run `ebay watch run` from Task Scheduler instead of cron.
 
 ## Limits
 

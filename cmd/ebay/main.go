@@ -69,7 +69,7 @@ Watch:
   ebay watch list
   ebay watch remove <name>
 
-Credentials come from the macOS Keychain, or EBAY_CLIENT_ID and
-EBAY_CLIENT_SECRET. Run "ebay auth" for setup instructions.
+Credentials come from EBAY_CLIENT_ID and EBAY_CLIENT_SECRET, the macOS
+Keychain, or a credentials file. Run "ebay auth" for setup instructions.
 `)
 }

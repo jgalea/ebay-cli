@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -28,33 +30,62 @@ type Credentials struct {
 }
 
 // LoadCredentials prefers the environment so CI and one-off runs work without
-// touching the Keychain.
+// touching a secret store. After that it tries the macOS Keychain, then the
+// credentials file, which is the only store on Linux and Windows.
 func LoadCredentials() (Credentials, error) {
-	id := os.Getenv("EBAY_CLIENT_ID")
-	secret := os.Getenv("EBAY_CLIENT_SECRET")
-	if id != "" && secret != "" {
-		return Credentials{id, secret}, nil
-	}
-	var err error
-	if id == "" {
-		if id, err = keychainRead(keychainClientID); err != nil {
-			return Credentials{}, err
+	c := Credentials{os.Getenv("EBAY_CLIENT_ID"), os.Getenv("EBAY_CLIENT_SECRET")}
+	if runtime.GOOS == "darwin" {
+		if c.ClientID == "" {
+			c.ClientID = keychainRead(keychainClientID)
+		}
+		if c.ClientSecret == "" {
+			c.ClientSecret = keychainRead(keychainClientSecret)
 		}
 	}
-	if secret == "" {
-		if secret, err = keychainRead(keychainClientSecret); err != nil {
+	if c.ClientID == "" || c.ClientSecret == "" {
+		path, err := CredentialsPath()
+		if err != nil {
 			return Credentials{}, err
 		}
+		if b, err := os.ReadFile(path); err == nil {
+			var f credentialsFile
+			if err := json.Unmarshal(b, &f); err != nil {
+				return Credentials{}, fmt.Errorf("%s is not readable as JSON: %w", path, err)
+			}
+			if c.ClientID == "" {
+				c.ClientID = f.ClientID
+			}
+			if c.ClientSecret == "" {
+				c.ClientSecret = f.ClientSecret
+			}
+		}
 	}
-	return Credentials{id, secret}, nil
+	if c.ClientID == "" || c.ClientSecret == "" {
+		return Credentials{}, fmt.Errorf("no credentials found, run `ebay auth` (or set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET)")
+	}
+	return c, nil
 }
 
-func keychainRead(service string) (string, error) {
+type credentialsFile struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
+// CredentialsPath is the file-based credential store, next to the watches.
+func CredentialsPath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "ebay-cli", "credentials.json"), nil
+}
+
+func keychainRead(service string) string {
 	out, err := exec.Command("security", "find-generic-password", "-s", service, "-w").Output()
 	if err != nil {
-		return "", fmt.Errorf("no credentials: keychain item %q not found, run `ebay auth` (or set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET)", service)
+		return ""
 	}
-	return strings.TrimSpace(string(out)), nil
+	return strings.TrimSpace(string(out))
 }
 
 type tokenResponse struct {
