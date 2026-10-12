@@ -66,6 +66,8 @@ Results show the price a buyer would act on right now, which for an auction with
 
 This is eBay's behaviour, not a bug in the tool. The Browse API returns only listings that offer Buy It Now. Once an auction receives a qualifying bid it loses `FIXED_PRICE` and disappears from a default search, which is exactly when it becomes interesting. Pass `--auctions` to see them.
 
+Flags may come before or after the keywords.
+
 ## Watch
 
 A watch is a saved search that reports only what it has not seen before, so it can run on a schedule without repeating itself.
