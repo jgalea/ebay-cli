@@ -18,6 +18,10 @@ func run(args []string) int {
 	switch args[0] {
 	case "search":
 		err = cmdSearch(args[1:])
+	case "item":
+		err = cmdItem(args[1:])
+	case "aspects":
+		err = cmdAspects(args[1:])
 	case "watch":
 		err = cmdWatch(args[1:])
 	case "auth":
@@ -44,27 +48,47 @@ func usage() {
 	fmt.Print(`ebay - search eBay marketplaces from the terminal
 
 Usage:
-  ebay search <keywords> [flags]
+  ebay search [keywords] [flags]
+  ebay item <item number|listing URL>... [--images dir] [--json] [--html]
+  ebay aspects [keywords] --category <id> [flags]
   ebay watch <add|list|remove|run> [args]
   ebay auth [--check]
   ebay markets
 
+Flags may come before or after the keywords.
+
 Search flags:
-  -m, --market     marketplace: de, es, it, fr, gb, nl, us ... (default de)
-      --ship-to    destination country for shipping quotes (default PT)
-      --min        minimum price
-      --max        maximum price
-      --currency   currency for price filters (default EUR)
-      --condition  new, used, or both (default both)
-      --seller-in  only sellers located in this country
-      --auctions   include auction listings (eBay hides them by default)
-      --fixed      buy-it-now listings only
-      --sort       price, -price, new, ending
-      --limit      results per page, 1-200 (default 50)
-      --json       raw JSON output
+  -m, --market         marketplace: de, es, it, fr, gb, nl, us ... (default de)
+      --ship-to        destination country for shipping quotes (default: marketplace country)
+      --min            minimum price
+      --max            maximum price
+      --currency       currency for price filters (default EUR)
+      --condition      new, used, or both (default both)
+      --condition-ids  eBay condition ids, comma-separated (see ebay aspects)
+      --no-defect      exclude "for parts or not working"
+      --category       eBay category ids, comma-separated (see ebay aspects)
+      --aspect         item specific "Name=value1|value2", repeatable, needs --category
+      --seller-in      only sellers located in this country
+      --auctions       include auction listings (eBay hides them by default)
+      --fixed          buy-it-now listings only
+      --sort           price, -price, new, ending
+      --limit          results per page, 1-200 (default 50)
+      --json           raw JSON output
+
+Item:
+  Prints price, condition notes, item specifics, the seller's description as
+  text and every picture, including pictures embedded in the description.
+      --images DIR     download all pictures into DIR
+      --html           description as HTML instead of text
+      --json           JSON with descriptionText and images added
+
+Aspects:
+  Lists sub-categories, condition ids and item specifics with eBay's exact
+  spelling, to build --category, --condition-ids and --aspect filters.
+      --top N          values shown per item specific (default 30)
 
 Watch:
-  ebay watch add <name> <keywords> [search flags]
+  ebay watch add <name> [keywords] [search flags]
   ebay watch run [name]     print only listings not seen before
   ebay watch list
   ebay watch remove <name>

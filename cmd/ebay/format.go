@@ -21,7 +21,11 @@ func printResults(w io.Writer, res *ebay.SearchResult, q ebay.Query) {
 		fmt.Fprintln(w, "note:", warn.Message)
 	}
 	if len(res.ItemSummaries) == 0 {
-		fmt.Fprintf(w, "no listings for %q on %s\n", q.Keywords, strings.ToUpper(q.Market))
+		what := fmt.Sprintf("%q", q.Keywords)
+		if q.Keywords == "" {
+			what = "category " + strings.Join(q.CategoryIDs, ",")
+		}
+		fmt.Fprintf(w, "no listings for %s on %s\n", what, strings.ToUpper(q.Market))
 		if !q.IncludeAuctions && !q.FixedOnly {
 			fmt.Fprintln(w, "eBay hides auction-only listings by default; try --auctions")
 		}
