@@ -92,6 +92,9 @@ func (c *Client) do(ctx context.Context, path string, q url.Values, market, ship
 	if loc, ok := marketLocale[market]; ok {
 		req.Header.Set("Accept-Language", loc)
 	}
+	if shipTo == "" {
+		shipTo = DefaultShipTo(market)
+	}
 	if shipTo != "" {
 		// Without this eBay quotes shipping to the marketplace's own country,
 		// which is the wrong number for a cross-border buyer.
@@ -109,4 +112,15 @@ func (c *Client) do(ctx context.Context, path string, q url.Values, market, ship
 		return fmt.Errorf("eBay returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
 	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// DefaultShipTo is the country a marketplace ships to by default: EBAY_DE
+// quotes shipping to Germany, EBAY_ES to Spain. It returns an empty string for
+// marketplace ids that do not end in a two-letter country code.
+func DefaultShipTo(market string) string {
+	cc := strings.TrimPrefix(strings.ToUpper(market), "EBAY_")
+	if len(cc) != 2 {
+		return ""
+	}
+	return cc
 }
