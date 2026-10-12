@@ -51,7 +51,7 @@ Results show the price a buyer would act on right now, which for an auction with
 | Flag | Meaning |
 | --- | --- |
 | `-m`, `--market` | `de`, `es`, `it`, `fr`, `gb`, `nl`, `at`, `us` and others; see `ebay markets` |
-| `--ship-to` | destination country for shipping quotes, default `PT` |
+| `--ship-to` | destination country for shipping quotes, default: the marketplace country (`de` → DE, `es` → ES, ...) |
 | `--min`, `--max` | price bounds |
 | `--currency` | currency for the price bounds, default `EUR` |
 | `--condition` | `new`, `used` or `both` |
@@ -65,6 +65,8 @@ Results show the price a buyer would act on right now, which for an auction with
 ### Auctions are hidden by default
 
 This is eBay's behaviour, not a bug in the tool. The Browse API returns only listings that offer Buy It Now. Once an auction receives a qualifying bid it loses `FIXED_PRICE` and disappears from a default search, which is exactly when it becomes interesting. Pass `--auctions` to see them.
+
+Flags may come before or after the keywords.
 
 ## Watch
 

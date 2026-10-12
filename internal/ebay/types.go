@@ -70,9 +70,10 @@ func (i Item) Shipping() (Money, bool) {
 }
 
 // Active returns the price a buyer would act on right now: the standing bid for
-// an auction that has bids, otherwise the listed price.
+// an auction that has bids, otherwise the listed price. An auction without bids
+// and without Buy It Now has only the opening bid.
 func (i Item) Active() *Money {
-	if i.CurrentBidPrice != nil && i.BidCount > 0 {
+	if i.CurrentBidPrice != nil && (i.BidCount > 0 || i.Price == nil) {
 		return i.CurrentBidPrice
 	}
 	return i.Price
