@@ -49,6 +49,8 @@ Usage:
   ebay auth [--check]
   ebay markets
 
+Flags may come before or after the keywords.
+
 Search flags:
   -m, --market     marketplace: de, es, it, fr, gb, nl, us ... (default de)
       --ship-to    destination country for shipping quotes (default PT)

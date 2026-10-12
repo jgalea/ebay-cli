@@ -71,14 +71,36 @@ func (f *searchFlags) query(keywords string) (ebay.Query, error) {
 	return q, nil
 }
 
+// parseInterspersed lets flags appear before, between or after positional
+// arguments, which the standard flag package does not allow on its own. A
+// literal "--" ends flag parsing.
+func parseInterspersed(fs *flag.FlagSet, args []string) ([]string, error) {
+	var pos []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return nil, err
+		}
+		rest := fs.Args()
+		if len(rest) == 0 {
+			return pos, nil
+		}
+		if consumed := len(args) - len(rest); consumed > 0 && args[consumed-1] == "--" {
+			return append(pos, rest...), nil
+		}
+		pos = append(pos, rest[0])
+		args = rest[1:]
+	}
+}
+
 func cmdSearch(args []string) error {
 	fs := flag.NewFlagSet("search", flag.ContinueOnError)
 	var f searchFlags
 	f.bind(fs)
-	if err := fs.Parse(args); err != nil {
+	pos, err := parseInterspersed(fs, args)
+	if err != nil {
 		return err
 	}
-	keywords := strings.Join(fs.Args(), " ")
+	keywords := strings.Join(pos, " ")
 	if keywords == "" {
 		return fmt.Errorf("nothing to search for")
 	}
