@@ -90,10 +90,10 @@ func watchAdd(args []string) error {
 	fs := flag.NewFlagSet("watch add", flag.ContinueOnError)
 	var f searchFlags
 	f.bind(fs)
-	if err := fs.Parse(args); err != nil {
+	rest, err := parseInterspersed(fs, args)
+	if err != nil {
 		return err
 	}
-	rest := fs.Args()
 	if len(rest) < 2 {
 		return fmt.Errorf("usage: ebay watch add <name> <keywords>")
 	}
