@@ -32,7 +32,7 @@ type Query struct {
 // not working".
 var NotDefectiveConditionIDs = []string{
 	"1000", "1500", "1750", "2000", "2010", "2020", "2030",
-	"2500", "2750", "3000", "4000", "5000", "6000",
+	"2500", "2750", "2990", "3000", "3010", "4000", "5000", "6000",
 }
 
 // Aspect is an item specific to filter on, such as Speicherkapazität with the
