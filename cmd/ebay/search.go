@@ -11,19 +11,43 @@ import (
 	"github.com/jgalea/ebay-cli/internal/ebay"
 )
 
+// aspectList collects repeated --aspect "Name=v1|v2" flags.
+type aspectList []ebay.Aspect
+
+func (a *aspectList) String() string {
+	parts := make([]string, len(*a))
+	for i, x := range *a {
+		parts[i] = x.String()
+	}
+	return strings.Join(parts, ", ")
+}
+
+func (a *aspectList) Set(s string) error {
+	x, err := ebay.ParseAspect(s)
+	if err != nil {
+		return err
+	}
+	*a = append(*a, x)
+	return nil
+}
+
 type searchFlags struct {
-	market    string
-	shipTo    string
-	min       string
-	max       string
-	currency  string
-	condition string
-	sellerIn  string
-	auctions  bool
-	fixed     bool
-	sort      string
-	limit     int
-	asJSON    bool
+	market       string
+	shipTo       string
+	min          string
+	max          string
+	currency     string
+	condition    string
+	conditionIDs string
+	noDefect     bool
+	category     string
+	aspects      aspectList
+	sellerIn     string
+	auctions     bool
+	fixed        bool
+	sort         string
+	limit        int
+	asJSON       bool
 }
 
 func (f *searchFlags) bind(fs *flag.FlagSet) {
@@ -34,12 +58,26 @@ func (f *searchFlags) bind(fs *flag.FlagSet) {
 	fs.StringVar(&f.max, "max", "", "maximum price")
 	fs.StringVar(&f.currency, "currency", "EUR", "currency for price filters")
 	fs.StringVar(&f.condition, "condition", "", "new, used, or both")
+	fs.StringVar(&f.conditionIDs, "condition-ids", "", "comma-separated eBay condition ids, e.g. 1000,3000")
+	fs.BoolVar(&f.noDefect, "no-defect", false, "exclude items sold for parts or not working")
+	fs.StringVar(&f.category, "category", "", "comma-separated eBay category ids")
+	fs.Var(&f.aspects, "aspect", `item specific filter "Name=value1|value2", repeatable`)
 	fs.StringVar(&f.sellerIn, "seller-in", "", "only sellers in this country")
 	fs.BoolVar(&f.auctions, "auctions", false, "include auction listings")
 	fs.BoolVar(&f.fixed, "fixed", false, "buy-it-now only")
 	fs.StringVar(&f.sort, "sort", "", "price, -price, new, ending")
 	fs.IntVar(&f.limit, "limit", 50, "results per page")
 	fs.BoolVar(&f.asJSON, "json", false, "raw JSON output")
+}
+
+func splitList(s string) []string {
+	var out []string
+	for _, p := range strings.Split(s, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func (f *searchFlags) query(keywords string) (ebay.Query, error) {
@@ -55,6 +93,9 @@ func (f *searchFlags) query(keywords string) (ebay.Query, error) {
 		SellerLoc:       f.sellerIn,
 		IncludeAuctions: f.auctions,
 		FixedOnly:       f.fixed,
+		CategoryIDs:     splitList(f.category),
+		Aspects:         f.aspects,
+		ConditionIDs:    splitList(f.conditionIDs),
 	}
 	switch strings.ToLower(f.condition) {
 	case "", "both", "any":
@@ -65,8 +106,17 @@ func (f *searchFlags) query(keywords string) (ebay.Query, error) {
 	default:
 		return q, fmt.Errorf("unknown condition %q (new, used, both)", f.condition)
 	}
+	if f.noDefect {
+		if len(q.ConditionIDs) > 0 {
+			return q, fmt.Errorf("--no-defect and --condition-ids contradict each other")
+		}
+		q.ConditionIDs = ebay.NotDefectiveConditionIDs
+	}
 	if f.auctions && f.fixed {
 		return q, fmt.Errorf("--auctions and --fixed contradict each other")
+	}
+	if len(q.Aspects) > 0 && len(q.CategoryIDs) == 0 {
+		return q, fmt.Errorf("--aspect needs --category")
 	}
 	return q, nil
 }
@@ -101,15 +151,13 @@ func cmdSearch(args []string) error {
 		return err
 	}
 	keywords := strings.Join(pos, " ")
-	if keywords == "" {
-		return fmt.Errorf("nothing to search for")
+	if keywords == "" && f.category == "" {
+		return fmt.Errorf("nothing to search for: give keywords, --category, or both")
 	}
-
 	q, err := f.query(keywords)
 	if err != nil {
 		return err
 	}
-
 	creds, err := ebay.LoadCredentials()
 	if err != nil {
 		return err
@@ -118,13 +166,11 @@ func cmdSearch(args []string) error {
 	if err != nil {
 		return err
 	}
-
 	if f.asJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(res)
 	}
-
 	printResults(os.Stdout, res, q)
 	return nil
 }

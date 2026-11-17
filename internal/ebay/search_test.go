@@ -115,3 +115,67 @@ func TestDefaultShipTo(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAspect(t *testing.T) {
+	a, err := ParseAspect("Speicherkapazität=2TB| 3 TB |4 TB")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Name != "Speicherkapazität" || len(a.Values) != 3 || a.Values[1] != "3 TB" {
+		t.Fatalf("got %+v", a)
+	}
+	for _, bad := range []string{"Speicherkapazität", "=4 TB", "Speicherkapazität=", "X=|"} {
+		if _, err := ParseAspect(bad); err == nil {
+			t.Fatalf("%q: expected an error", bad)
+		}
+	}
+}
+
+func TestSearchParamsCategoryAspectsConditions(t *testing.T) {
+	v, market, err := searchParams(Query{
+		Market:          "de",
+		CategoryIDs:     []string{"56083"},
+		Aspects:         []Aspect{{Name: "Speicherkapazität", Values: []string{"2TB", "4 TB"}}, {Name: "Schnittstelle", Values: []string{"SATA III"}}},
+		ConditionIDs:    []string{"1000", "3000"},
+		IncludeAuctions: true,
+		Sort:            "ending",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if market != "EBAY_DE" {
+		t.Fatalf("market %q", market)
+	}
+	if v.Has("q") {
+		t.Fatal("no keywords given, q must be absent")
+	}
+	if got := v.Get("category_ids"); got != "56083" {
+		t.Fatalf("category_ids %q", got)
+	}
+	if got, want := v.Get("aspect_filter"), "categoryId:56083,Speicherkapazität:{2TB|4 TB},Schnittstelle:{SATA III}"; got != want {
+		t.Fatalf("aspect_filter got %q want %q", got, want)
+	}
+	if got, want := v.Get("filter"), "conditionIds:{1000|3000},buyingOptions:{AUCTION|FIXED_PRICE}"; got != want {
+		t.Fatalf("filter got %q want %q", got, want)
+	}
+	if v.Get("sort") != "endingSoonest" {
+		t.Fatalf("sort %q", v.Get("sort"))
+	}
+}
+
+func TestSearchParamsNeedsKeywordsOrCategory(t *testing.T) {
+	if _, _, err := searchParams(Query{Market: "de"}); err == nil {
+		t.Fatal("expected an error without keywords and category")
+	}
+	if _, _, err := searchParams(Query{Market: "de", Keywords: "x", Aspects: []Aspect{{Name: "A", Values: []string{"b"}}}}); err == nil {
+		t.Fatal("expected an error for aspects without a category")
+	}
+}
+
+func TestNotDefectiveExcludes7000(t *testing.T) {
+	for _, id := range NotDefectiveConditionIDs {
+		if id == "7000" {
+			t.Fatal("7000 is for parts or not working")
+		}
+	}
+}

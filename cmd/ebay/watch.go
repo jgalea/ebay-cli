@@ -14,15 +14,21 @@ import (
 )
 
 type watch struct {
-	Name     string   `json:"name"`
-	Keywords string   `json:"keywords"`
-	Market   string   `json:"market"`
-	ShipTo   string   `json:"shipTo"`
-	Min      string   `json:"min,omitempty"`
-	Max      string   `json:"max,omitempty"`
-	Currency string   `json:"currency"`
-	Auctions bool     `json:"auctions"`
-	Seen     []string `json:"seen"`
+	Name         string        `json:"name"`
+	Keywords     string        `json:"keywords"`
+	Market       string        `json:"market"`
+	ShipTo       string        `json:"shipTo"`
+	Min          string        `json:"min,omitempty"`
+	Max          string        `json:"max,omitempty"`
+	Currency     string        `json:"currency"`
+	Auctions     bool          `json:"auctions"`
+	Fixed        bool          `json:"fixed,omitempty"`
+	Condition    string        `json:"condition,omitempty"`
+	ConditionIDs []string      `json:"conditionIds,omitempty"`
+	Categories   []string      `json:"categories,omitempty"`
+	Aspects      []ebay.Aspect `json:"aspects,omitempty"`
+	SellerIn     string        `json:"sellerIn,omitempty"`
+	Seen         []string      `json:"seen"`
 }
 
 type watchFile struct {
@@ -94,8 +100,12 @@ func watchAdd(args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(rest) < 2 {
-		return fmt.Errorf("usage: ebay watch add <name> <keywords>")
+	if len(rest) < 1 || (len(rest) < 2 && f.category == "") {
+		return fmt.Errorf("usage: ebay watch add <name> [keywords] [search flags], keywords or --category required")
+	}
+	q, err := f.query(strings.Join(rest[1:], " "))
+	if err != nil {
+		return err
 	}
 	name := rest[0]
 	keywords := strings.Join(rest[1:], " ")
@@ -110,14 +120,20 @@ func watchAdd(args []string) error {
 		}
 	}
 	wf.Watches = append(wf.Watches, watch{
-		Name:     name,
-		Keywords: keywords,
-		Market:   f.market,
-		ShipTo:   f.shipTo,
-		Min:      f.min,
-		Max:      f.max,
-		Currency: f.currency,
-		Auctions: f.auctions,
+		Name:         name,
+		Keywords:     keywords,
+		Market:       f.market,
+		ShipTo:       f.shipTo,
+		Min:          f.min,
+		Max:          f.max,
+		Currency:     f.currency,
+		Auctions:     f.auctions,
+		Fixed:        f.fixed,
+		Condition:    f.condition,
+		ConditionIDs: q.ConditionIDs,
+		Categories:   q.CategoryIDs,
+		Aspects:      q.Aspects,
+		SellerIn:     f.sellerIn,
 	})
 	if err := saveWatches(wf, path); err != nil {
 		return err
@@ -200,7 +216,7 @@ func watchRun(args []string) error {
 		}
 		ran++
 
-		res, err := client.Search(context.Background(), ebay.Query{
+		q := ebay.Query{
 			Keywords:        w.Keywords,
 			Market:          w.Market,
 			ShipTo:          w.ShipTo,
@@ -208,9 +224,21 @@ func watchRun(args []string) error {
 			MaxPrice:        w.Max,
 			Currency:        w.Currency,
 			IncludeAuctions: w.Auctions,
+			FixedOnly:       w.Fixed,
+			ConditionIDs:    w.ConditionIDs,
+			CategoryIDs:     w.Categories,
+			Aspects:         w.Aspects,
+			SellerLoc:       w.SellerIn,
 			Sort:            "new",
 			Limit:           100,
-		})
+		}
+		switch strings.ToLower(w.Condition) {
+		case "new":
+			q.Conditions = []string{"NEW"}
+		case "used":
+			q.Conditions = []string{"USED"}
+		}
+		res, err := client.Search(context.Background(), q)
 		if err != nil {
 			return fmt.Errorf("watch %q: %w", w.Name, err)
 		}

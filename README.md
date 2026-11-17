@@ -55,6 +55,10 @@ Results show the price a buyer would act on right now, which for an auction with
 | `--min`, `--max` | price bounds |
 | `--currency` | currency for the price bounds, default `EUR` |
 | `--condition` | `new`, `used` or `both` |
+| `--condition-ids` | eBay condition ids, comma-separated; `ebay aspects` lists them |
+| `--no-defect` | everything except "for parts or not working" (7000) |
+| `--category` | eBay category ids, comma-separated; keywords become optional |
+| `--aspect` | item specific `"Name=value1\|value2"`, repeatable, needs `--category` |
 | `--seller-in` | only sellers located in this country |
 | `--auctions` | include auction listings |
 | `--fixed` | buy-it-now only |
@@ -67,6 +71,19 @@ Results show the price a buyer would act on right now, which for an auction with
 This is eBay's behaviour, not a bug in the tool. The Browse API returns only listings that offer Buy It Now. Once an auction receives a qualifying bid it loses `FIXED_PRICE` and disappears from a default search, which is exactly when it becomes interesting. Pass `--auctions` to see them.
 
 Flags may come before or after the keywords.
+
+### Categories and item specifics
+
+`ebay aspects` shows the sub-categories, condition ids and item specifics eBay knows for a search, spelled exactly the way the filters need them. Values are matched literally, and eBay is not consistent: on ebay.de it is `2TB` but `3 TB`.
+
+```
+ebay aspects festplatte
+ebay aspects --category 56083
+ebay search --category 56083 --auctions --sort ending --min 10 --max 60 --no-defect \
+  --aspect "Speicherkapazität=2TB|3 TB|4 TB" --aspect "Schnittstelle=SATA I|SATA II|SATA III"
+```
+
+An item specific filter only matches listings where the seller filled in that specific, so it narrows more than the site's own search does.
 
 ## Watch
 
