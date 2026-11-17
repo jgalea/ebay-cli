@@ -85,6 +85,16 @@ ebay search --category 56083 --auctions --sort ending --min 10 --max 60 --no-def
 
 An item specific filter only matches listings where the seller filled in that specific, so it narrows more than the site's own search does.
 
+## Item
+
+```
+ebay item 257787957947
+ebay item https://www.ebay.de/itm/257787957947 --images ./pics
+ebay item 257787957947 137818304150 --json
+```
+
+Prints price, condition notes, item specifics, the seller's description as plain text and every picture, including pictures the seller embedded in the description, where test results such as SMART data often live. `--images DIR` downloads them, `--html` keeps the description as HTML, and `--json` adds `descriptionText`, `images` and `imageFiles` to the API response.
+
 ## Watch
 
 A watch is a saved search that reports only what it has not seen before, so it can run on a schedule without repeating itself.

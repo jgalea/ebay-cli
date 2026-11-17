@@ -18,6 +18,8 @@ func run(args []string) int {
 	switch args[0] {
 	case "search":
 		err = cmdSearch(args[1:])
+	case "item":
+		err = cmdItem(args[1:])
 	case "aspects":
 		err = cmdAspects(args[1:])
 	case "watch":
@@ -47,6 +49,7 @@ func usage() {
 
 Usage:
   ebay search [keywords] [flags]
+  ebay item <item number|listing URL>... [--images dir] [--json] [--html]
   ebay aspects [keywords] --category <id> [flags]
   ebay watch <add|list|remove|run> [args]
   ebay auth [--check]
@@ -71,6 +74,13 @@ Search flags:
       --sort           price, -price, new, ending
       --limit          results per page, 1-200 (default 50)
       --json           raw JSON output
+
+Item:
+  Prints price, condition notes, item specifics, the seller's description as
+  text and every picture, including pictures embedded in the description.
+      --images DIR     download all pictures into DIR
+      --html           description as HTML instead of text
+      --json           JSON with descriptionText and images added
 
 Aspects:
   Lists sub-categories, condition ids and item specifics with eBay's exact
