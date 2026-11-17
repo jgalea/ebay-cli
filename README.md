@@ -51,7 +51,7 @@ Results show the price a buyer would act on right now, which for an auction with
 | Flag | Meaning |
 | --- | --- |
 | `-m`, `--market` | `de`, `es`, `it`, `fr`, `gb`, `nl`, `at`, `us` and others; see `ebay markets` |
-| `--ship-to` | destination country for shipping quotes, default `PT` |
+| `--ship-to` | destination country for shipping quotes, default: the marketplace country (`de` → DE, `es` → ES, ...) |
 | `--min`, `--max` | price bounds |
 | `--currency` | currency for the price bounds, default `EUR` |
 | `--condition` | `new`, `used` or `both` |

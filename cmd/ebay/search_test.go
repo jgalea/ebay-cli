@@ -17,7 +17,7 @@ func TestParseInterspersed(t *testing.T) {
 	if want := []string{"flair", "58", "--literal"}; !reflect.DeepEqual(pos, want) {
 		t.Fatalf("got %v want %v", pos, want)
 	}
-	if f.market != "es" || !f.auctions || f.sort != "-price" {
+	if f.market != "es" || f.shipTo != "" || !f.auctions || f.sort != "-price" {
 		t.Fatalf("flags not parsed: %+v", f)
 	}
 }

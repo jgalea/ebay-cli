@@ -29,7 +29,7 @@ type searchFlags struct {
 func (f *searchFlags) bind(fs *flag.FlagSet) {
 	fs.StringVar(&f.market, "market", "de", "marketplace")
 	fs.StringVar(&f.market, "m", "de", "marketplace")
-	fs.StringVar(&f.shipTo, "ship-to", "PT", "destination country for shipping quotes")
+	fs.StringVar(&f.shipTo, "ship-to", "", "destination country for shipping quotes (default: the marketplace country)")
 	fs.StringVar(&f.min, "min", "", "minimum price")
 	fs.StringVar(&f.max, "max", "", "maximum price")
 	fs.StringVar(&f.currency, "currency", "EUR", "currency for price filters")

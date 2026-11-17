@@ -107,3 +107,11 @@ func TestActiveOpeningBidWithoutBids(t *testing.T) {
 		t.Fatalf("got %v, want the opening bid", got)
 	}
 }
+
+func TestDefaultShipTo(t *testing.T) {
+	for market, want := range map[string]string{"EBAY_DE": "DE", "EBAY_ES": "ES", "EBAY_GB": "GB", "ebay_at": "AT", "EBAY_MOTORS_US": ""} {
+		if got := DefaultShipTo(market); got != want {
+			t.Fatalf("%s: got %q want %q", market, got, want)
+		}
+	}
+}
