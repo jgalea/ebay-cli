@@ -97,3 +97,13 @@ func TestShippingPicksCheapestAndReportsAbsence(t *testing.T) {
 		t.Fatal("expected no shipping quote when eBay omits the container")
 	}
 }
+
+func TestActiveOpeningBidWithoutBids(t *testing.T) {
+	it := Item{
+		CurrentBidPrice: &Money{Value: "10.00", Currency: "EUR"},
+		BuyingOptions:   []string{"AUCTION"},
+	}
+	if got := it.Active(); got == nil || got.Value != "10.00" {
+		t.Fatalf("got %v, want the opening bid", got)
+	}
+}
